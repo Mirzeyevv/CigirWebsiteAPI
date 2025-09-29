@@ -1,0 +1,48 @@
+# =================================================================
+# Node.js / Express.js üçün standart .gitignore faylı
+# =================================================================
+
+# Asılılıqlar (Dependencies)
+# Bu qovluq "npm install" əmri ilə yenidən yaradıla bilər
+/node_modules
+
+# Log faylları (Jurnallar)
+# Tətbiqin işləməsi zamanı yaranan loglar
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+logs
+*.log
+
+# Mühit dəyişənləri (Environment Variables)
+# Bu fayl API açarları, database şifrələri kimi həssas məlumatları saxlayır.
+# Əsla Git-ə yüklənməməlidir!
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Build və Distribution qovluqları
+# Proyekt build edildikdə yaranan fayllar (məs. TypeScript istifadə edirsinizsə)
+/dist
+/build
+.npm
+.eslintcache
+
+# Test və kod əhatəsi (Coverage) hesabatları
+/coverage
+/lcov-report
+
+# Bəzi IDE və kod redaktorlarının konfiqurasiya faylları
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
+
+# Əməliyyat sisteminə aid fayllar
+.DS_Store
+Thumbs.db
