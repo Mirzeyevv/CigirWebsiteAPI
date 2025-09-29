@@ -1,4 +1,6 @@
+// models/projectModel.js
 import mongoose from 'mongoose';
+import mongooseDelete from 'mongoose-delete'; // <-- 1. IMPORT ET
 
 const projectSchema = new mongoose.Schema({
     title: {
@@ -60,13 +62,18 @@ const projectSchema = new mongoose.Schema({
     updatedBy: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User'
-    },
-    deletedBy: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User'
     }
+    // `deletedBy` sahəsini schemadan silirik, plugin özü idarə edəcək
 }, {
     timestamps: true
+});
+
+// <-- 2. PLUGİNİ ƏLAVƏ ET
+projectSchema.plugin(mongooseDelete, { 
+    overrideMethods: 'all', 
+    deletedAt: true,
+    deletedBy: true, 
+    deletedByUserstamp: true 
 });
 
 const Project = mongoose.model('Project', projectSchema);

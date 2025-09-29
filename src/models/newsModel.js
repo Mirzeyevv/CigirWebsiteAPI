@@ -1,4 +1,6 @@
+// models/newsModel.js
 import mongoose from 'mongoose';
+import mongooseDelete from 'mongoose-delete'; // <-- 1. IMPORT ET
 
 const newsSchema = new mongoose.Schema({
     title: {
@@ -35,14 +37,21 @@ const newsSchema = new mongoose.Schema({
     updatedBy: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User'
-    },
-    deletedBy: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User'
     }
+    // `deletedBy` sahəsini schemadan silə bilərik, çünki plugin bunu özü əlavə edəcək
 }, {
     timestamps: true
 });
+
+// <-- 2. PLUGİNİ ƏLAVƏ ET
+// `deletedBy` sahəsini avtomatik doldurması üçün `deletedByUserstamp` aktiv edirik
+newsSchema.plugin(mongooseDelete, { 
+    overrideMethods: 'all', 
+    deletedAt: true,
+    deletedBy: true, 
+    deletedByUserstamp: true 
+});
+
 
 const News = mongoose.model('News', newsSchema);
 

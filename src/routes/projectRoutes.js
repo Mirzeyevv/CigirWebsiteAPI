@@ -1,3 +1,4 @@
+// routes/projectRoutes.js
 import express from 'express';
 import {
     createProject,
@@ -6,19 +7,17 @@ import {
     updateProject,
     deleteProject
 } from '../controllers/projectController.js';
-import { protect } from '../utils/authMiddleware.js';
+import { protect } from '../utils/authMiddleware.js'; // Yalnız "protect" istifadə edirik
 
 const router = express.Router();
 
-// Görmək (GET) public, yaratmaq (POST) qorunur
 router.route('/')
     .get(getAllProjects)
-    .post(protect, createProject);
+    .post(protect, createProject); // <-- isAdmin çıxarıldı
 
-// Tək birini görmək (GET) public, yeniləmək (PATCH) və silmək (DELETE) qorunur
 router.route('/:id')
     .get(getProjectById)
-    .patch(protect, updateProject)
-    .delete(protect, deleteProject);
+    .patch(protect, updateProject) // <-- isAdmin çıxarıldı
+    .delete(protect, deleteProject); // <-- isAdmin çıxarıldı
 
 export default router;

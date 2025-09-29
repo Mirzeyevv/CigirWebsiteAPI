@@ -1,3 +1,4 @@
+// routes/newsCategoryRoutes.js
 import express from 'express';
 import {
     createCategory,
@@ -6,19 +7,17 @@ import {
     updateCategory,
     deleteCategory
 } from '../controllers/newsCategoryController.js';
-import { protect } from '../utils/authMiddleware.js';
+import { protect } from '../utils/authMiddleware.js'; // Yalnız "protect" istifadə edirik
 
 const router = express.Router();
 
-// Görmək (GET) public, yaratmaq (POST) qorunur
 router.route('/')
     .get(getAllCategories)
-    .post(protect, createCategory);
+    .post(protect, createCategory); // <-- isAdmin çıxarıldı
 
-// Tək birini görmək (GET) public, yeniləmək (PATCH) və silmək (DELETE) qorunur
 router.route('/:id')
     .get(getCategoryById)
-    .patch(protect, updateCategory)
-    .delete(protect, deleteCategory);
+    .patch(protect, updateCategory) // <-- isAdmin çıxarıldı
+    .delete(protect, deleteCategory); // <-- isAdmin çıxarıldı
 
 export default router;

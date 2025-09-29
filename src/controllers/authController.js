@@ -2,12 +2,11 @@ import User from '../models/userModel.js';
 import bcryptjs from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
-// Qeyd: Bu funksiyanı yalnız admin çağıra biləcək (növbəti addımlarda tənzimləyəcəyik)
 export const createUser = async (req, res) => {
     const { username, password, role } = req.body;
     try {
-        // Şifrəni hash-ləyirik
-        const hashedPassword = bcryptjs.hashSync(password, 10);
+        // Asynchronous version for better performance
+        const hashedPassword = await bcryptjs.hash(password, 10);
         
         const newUser = new User({ username, password: hashedPassword, role });
         await newUser.save();
@@ -19,29 +18,44 @@ export const createUser = async (req, res) => {
 };
 
 export const login = async (req, res) => {
+    console.log("--- LOG 1: /login request received ---");
     const { username, password } = req.body;
+    console.log(`--- LOG 2: Data from body: username=${username}`);
+
     try {
         const validUser = await User.findOne({ username });
+
         if (!validUser) {
-            return res.status(404).json({ message: 'User not found!' });
+            console.log("--- ERROR: User not found! ---");
+            // For security, we send a generic message.
+            return res.status(401).json({ message: 'Invalid credentials!' });
         }
-        
-        const validPassword = bcryptjs.compareSync(password, validUser.password);
+        console.log("--- LOG 3: User found in database:", validUser.username);
+
+        const validPassword = await bcryptjs.compare(password, validUser.password);
+
         if (!validPassword) {
-            return res.status(401).json({ message: 'Wrong password!' });
+            console.log("--- ERROR: Password is not valid! ---");
+            // For security, we send the same generic message.
+            return res.status(401).json({ message: 'Invalid credentials!' });
         }
+        console.log("--- LOG 4: Password verified successfully ---");
         
-        // Şifrə düzgündürsə, token yaradırıq
+        console.log("--- LOG 5: PREPARING TO CREATE TOKEN. JWT_SECRET value:", process.env.JWT_SECRET);
         const token = jwt.sign(
-            { id: validUser._id, role: validUser.role }, // Token-in içində saxlanacaq məlumat
-            process.env.JWT_SECRET // .env faylındakı gizli açar
+            { id: validUser._id, role: validUser.role },
+            process.env.JWT_SECRET
         );
-            
-        // Cavab olaraq istifadəçi məlumatlarını (şifrə xaric) və token-i göndəririk
+        console.log("--- LOG 6: Token created successfully ---");
+        
         const { password: hashedPassword, ...rest } = validUser._doc;
-        res.status(200).json({ ...rest, token });
+        
+        console.log("--- LOG 7: PREPARING TO SEND RESPONSE ---");
+        res.status(200).json({ user: rest, token });
 
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        console.log("--- CATCH ERROR: Execution fell into the 'catch' block! ---");
+        console.error(error); // Log the full error for debugging
+        res.status(500).json({ message: `Server error: ${error.message}` });
     }
 };

@@ -1,6 +1,8 @@
+import cors from 'cors';
 import express from 'express';
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
+import './scheduler.js';
 import authRouter from './routes/authRoutes.js'; 
 import newsCategoryRouter from './routes/newsCategoryRoutes.js';
 import projectCategoryRouter from './routes/projectCategoryRoutes.js';
@@ -10,6 +12,10 @@ import projectRouter from './routes/projectRoutes.js';
 dotenv.config();
 const app = express();
 app.use(express.json());
+
+app.use(cors({
+  origin: 'http://localhost:5173' 
+}));
 
 // --- API Routes ---
 app.use('/api/auth', authRouter);
@@ -22,6 +28,10 @@ app.use('/api/projects', projectRouter);
 mongoose.connect(process.env.MONGODB)
     .then(() => console.log('Database connected!'))
     .catch((err) => console.log('DB connection error:', err));
+
+
+
+
 
 // --- Server Start ---
 const PORT = process.env.PORT || 3000;
