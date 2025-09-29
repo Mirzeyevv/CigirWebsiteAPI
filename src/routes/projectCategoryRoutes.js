@@ -6,18 +6,19 @@ import {
     updateProjectCategory,
     deleteProjectCategory
 } from '../controllers/projectCategoryController.js';
+import { protect } from '../utils/authMiddleware.js';
 
 const router = express.Router();
 
-router
-    .route('/')
+// Görmək (GET) public, yaratmaq (POST) qorunur
+router.route('/')
     .get(getAllProjectCategories)
-    .post(createProjectCategory);
+    .post(protect, createProjectCategory);
 
-router
-    .route('/:id')
+// Tək birini görmək (GET) public, yeniləmək (PATCH) və silmək (DELETE) qorunur
+router.route('/:id')
     .get(getProjectCategoryById)
-    .patch(updateProjectCategory)
-    .delete(deleteProjectCategory);
+    .patch(protect, updateProjectCategory)
+    .delete(protect, deleteProjectCategory);
 
 export default router;

@@ -6,18 +6,19 @@ import {
     updateProject,
     deleteProject
 } from '../controllers/projectController.js';
+import { protect } from '../utils/authMiddleware.js';
 
 const router = express.Router();
 
-router
-    .route('/')
+// Görmək (GET) public, yaratmaq (POST) qorunur
+router.route('/')
     .get(getAllProjects)
-    .post(createProject);
+    .post(protect, createProject);
 
-router
-    .route('/:id')
+// Tək birini görmək (GET) public, yeniləmək (PATCH) və silmək (DELETE) qorunur
+router.route('/:id')
     .get(getProjectById)
-    .patch(updateProject)
-    .delete(deleteProject);
+    .patch(protect, updateProject)
+    .delete(protect, deleteProject);
 
 export default router;

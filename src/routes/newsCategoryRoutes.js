@@ -1,29 +1,24 @@
 import express from 'express';
-
-// Controller-dən funksiyaları import edirik
-import { 
-    createCategory, 
-    getAllCategories, 
-    getCategoryById, 
-    updateCategory, 
-    deleteCategory 
+import {
+    createCategory,
+    getAllCategories,
+    getCategoryById,
+    updateCategory,
+    deleteCategory
 } from '../controllers/newsCategoryController.js';
+import { protect } from '../utils/authMiddleware.js';
 
-// Yeni router yaradırıq
 const router = express.Router();
 
-// '/' (əsas) endpoint-i üçün GET və POST sorğuları
-router
-    .route('/')
+// Görmək (GET) public, yaratmaq (POST) qorunur
+router.route('/')
     .get(getAllCategories)
-    .post(createCategory);
+    .post(protect, createCategory);
 
-// '/:id' (ID ilə) endpoint-i üçün GET, PATCH və DELETE sorğuları
-router
-    .route('/:id')
+// Tək birini görmək (GET) public, yeniləmək (PATCH) və silmək (DELETE) qorunur
+router.route('/:id')
     .get(getCategoryById)
-    .patch(updateCategory)
-    .delete(deleteCategory);
+    .patch(protect, updateCategory)
+    .delete(protect, deleteCategory);
 
-// Router-i export edirik ki, server.js-də istifadə edə bilək
 export default router;
