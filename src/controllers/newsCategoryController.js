@@ -1,103 +1,69 @@
-// controllers/newsCategoryController.js
 import NewsCategory from '../models/newsCategoryModel.js';
 import { createLog } from '../utils/logger.js';
 
-// @desc    Yeni kateqoriya yarat
 export const createCategory = async (req, res) => {
     try {
-        const newCategoryData = {
-            name: req.body.name,
-            createdBy: req.user._id
-        };
-        const newCategory = await NewsCategory.create(newCategoryData);
-
-        await createLog(req.user, 'CREATE', 'NewsCategory', newCategory._id);
-        
-        res.status(201).json({
-            status: 'success',
-            data: {
-                category: newCategory
-            }
-        });
+        const newCategory = await NewsCategory.create({ name: req.body.name, createdBy: req.user._id });
+        await createLog(req.user, 'CREATE', 'NewsCategory', newCategory._id, { name: newCategory.name });
+        res.status(201).json({ status: 'success', data: { category: newCategory } });
     } catch (err) {
-        res.status(400).json({
-            status: 'fail',
-            message: err.message
-        });
+        res.status(400).json({ status: 'fail', message: err.message });
     }
 };
 
-// @desc    Bütün kateqoriyaları gətir
 export const getAllCategories = async (req, res) => {
     try {
         const categories = await NewsCategory.find();
-        // Frontend-in gözlədiyi kimi birbaşa massiv formatında qaytarırıq
         res.status(200).json(categories);
     } catch (err) {
-        res.status(500).json({
-            status: 'fail',
-            message: err.message
-        });
+        res.status(500).json({ status: 'fail', message: err.message });
     }
 };
 
-// @desc    Bir kateqoriyanı ID-yə görə gətir
 export const getCategoryById = async (req, res) => {
     try {
         const category = await NewsCategory.findById(req.params.id);
         if (!category) {
             return res.status(404).json({ status: 'fail', message: 'Bu ID-də kateqoriya tapılmadı' });
         }
-        res.status(200).json({
-            status: 'success',
-            data: {
-                category
-            }
-        });
+        res.status(200).json({ status: 'success', data: { category } });
     } catch (err) {
         res.status(500).json({ status: 'fail', message: err.message });
     }
 };
 
-// @desc    Bir kateqoriyanı yenilə
 export const updateCategory = async (req, res) => {
     try {
-        const updateData = {
-            name: req.body.name,
-            updatedBy: req.user._id
-        };
-        const category = await NewsCategory.findByIdAndUpdate(req.params.id, updateData, {
-            new: true,
-            runValidators: true
-        });
-
-        if (!category) {
+        const oldDoc = await NewsCategory.findById(req.params.id).lean();
+        if (!oldDoc) {
             return res.status(404).json({ status: 'fail', message: 'Bu ID-də kateqoriya tapılmadı' });
         }
+        
+        const updateData = { name: req.body.name, updatedBy: req.user._id };
+        const updatedDoc = await NewsCategory.findByIdAndUpdate(req.params.id, updateData, { new: true, runValidators: true });
 
-        await createLog(req.user, 'UPDATE', 'NewsCategory', category._id);
+        const details = { from: { name: oldDoc.name }, to: { name: updatedDoc.name } };
+        await createLog(req.user, 'UPDATE', 'NewsCategory', updatedDoc._id, details);
 
-        res.status(200).json({
-            status: 'success',
-            data: {
-                category
-            }
-        });
+        res.status(200).json({ status: 'success', data: { category: updatedDoc } });
     } catch (err) {
         res.status(400).json({ status: 'fail', message: err.message });
     }
 };
 
-// @desc    Bir kateqoriyanı sil (soft delete)
 export const deleteCategory = async (req, res) => {
     try {
-        const category = await NewsCategory.deleteById(req.params.id, req.user._id);
-
-        if (!category) {
+        // 1. Əvvəlcə elementi tapırıq ki, məlumatlarını götürə bilək
+        const categoryToDelete = await NewsCategory.findById(req.params.id);
+        if (!categoryToDelete) {
             return res.status(404).json({ status: 'fail', message: 'Bu ID-də kateqoriya tapılmadı' });
         }
         
-        await createLog(req.user, 'DELETE', 'NewsCategory', req.params.id);
+        // 2. Elementin öz üzərində delete metodunu çağırırıq (bu soft delete edəcək)
+        await categoryToDelete.delete(req.user._id);
+        
+        // 3. İndi əlimizdə olan məlumatla detallı log yaradırıq
+        await createLog(req.user, 'DELETE', 'NewsCategory', req.params.id, { name: categoryToDelete.name });
         
         res.status(200).json({
             status: 'success',

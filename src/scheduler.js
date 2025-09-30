@@ -33,15 +33,32 @@ cron.schedule('0 0 * * *', async () => {
         console.error('Soft-deleted məlumatları təmizləyərkən xəta baş verdi:', error);
     }
 
-    // --- 2. Altı aydan köhnə logları silmək ---
-    const sixMonthsAgo = new Date(new Date().setMonth(new Date().getMonth() - 6));
+    // 1. Bir aydan köhnə LOGIN və LOGOUT loglarını silmək
+    const oneMonthAgoLogs = new Date(new Date().setDate(new Date().getDate() - 30));
     try {
-        const result = await Log.deleteMany({ timestamp: { $lt: sixMonthsAgo } });
+        const result = await Log.deleteMany({
+            action: { $in: ['LOGIN', 'LOGOUT'] }, // Yalnız LOGIN və LOGOUT olanlar
+            timestamp: { $lt: oneMonthAgoLogs }
+        });
         if (result.deletedCount > 0) {
-            console.log(`🧹 Logs kolleksiyasından ${result.deletedCount} köhnə log həmişəlik silindi.`);
+            console.log(`🧹 Logs kolleksiyasından ${result.deletedCount} köhnə login/logout qeydi həmişəlik silindi.`);
         }
     } catch (error) {
-        console.error('Köhnə logları təmizləyərkən xəta baş verdi:', error);
+        console.error('Köhnə login/logout loglarını təmizləyərkən xəta baş verdi:', error);
+    }
+
+    // 2. Altı aydan köhnə DİGƏR (CREATE, UPDATE, DELETE) logları silmək
+    const sixMonthsAgo = new Date(new Date().setMonth(new Date().getMonth() - 6));
+    try {
+        const result = await Log.deleteMany({
+            action: { $nin: ['LOGIN', 'LOGOUT'] }, // LOGIN və LOGOUT olmayanlar
+            timestamp: { $lt: sixMonthsAgo }
+        });
+        if (result.deletedCount > 0) {
+            console.log(`🧹 Logs kolleksiyasından ${result.deletedCount} köhnə əməliyyat qeydi həmişəlik silindi.`);
+        }
+    } catch (error) {
+        console.error('Köhnə əməliyyat loglarını təmizləyərkən xəta baş verdi:', error);
     }
 
     console.log(`[${new Date().toISOString()}] Gündəlik təmizləmə işi başa çatdı.`);

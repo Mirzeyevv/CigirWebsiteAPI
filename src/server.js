@@ -8,6 +8,9 @@ import newsCategoryRouter from './routes/newsCategoryRoutes.js';
 import projectCategoryRouter from './routes/projectCategoryRoutes.js';
 import newsRouter from './routes/newsRoutes.js';
 import projectRouter from './routes/projectRoutes.js';
+import logRouter from './routes/logRoutes.js';
+import recycleBinRouter from './routes/recycleBinRoutes.js';
+import userRouter from './routes/userRoutes.js';
 
 dotenv.config();
 const app = express();
@@ -18,6 +21,9 @@ app.use(cors({
 }));
 
 // --- API Routes ---
+app.use('/api/users', userRouter);
+app.use('/api/recycle-bin', recycleBinRouter);
+app.use('/api/logs', logRouter);
 app.use('/api/auth', authRouter);
 app.use('/api/news-categories', newsCategoryRouter);
 app.use('/api/project-categories', projectCategoryRouter);

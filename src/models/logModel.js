@@ -10,7 +10,7 @@ const logSchema = new mongoose.Schema({
     action: {
         type: String,
         required: true,
-        enum: ['CREATE', 'UPDATE', 'DELETE', 'LOGIN'] // Loglanacaq əməliyyat növləri
+        enum: ['CREATE', 'UPDATE', 'DELETE', 'LOGIN', 'LOGOUT', 'RESTORE'] // Əməliyyat növləri
     },
     entity: {
         type: String,
@@ -22,7 +22,10 @@ const logSchema = new mongoose.Schema({
     timestamp: {
         type: Date,
         default: Date.now
-    }
+    },
+    details: {
+        type: mongoose.Schema.Types.Mixed
+    },
 });
 
 const Log = mongoose.model('Log', logSchema);

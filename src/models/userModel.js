@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import mongooseDelete from 'mongoose-delete';
 
 const userSchema = new mongoose.Schema({
     username: {
@@ -23,6 +24,8 @@ const userSchema = new mongoose.Schema({
 }, {
     timestamps: true
 });
+
+userSchema.plugin(mongooseDelete, { overrideMethods: 'all', deletedAt: true, deletedBy: true, deletedByUserstamp: true });
 
 const User = mongoose.model('User', userSchema);
 

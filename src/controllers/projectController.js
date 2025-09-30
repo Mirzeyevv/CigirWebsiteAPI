@@ -1,75 +1,86 @@
-// controllers/projectController.js
 import Project from '../models/projectModel.js';
 import { createLog } from '../utils/logger.js';
+import slugify from 'slugify';
 
-// @desc    Yeni bir layihə yarat
 export const createProject = async (req, res) => {
     try {
-        const newProjectData = {
-            ...req.body,
-            createdBy: req.user._id
-        };
+        const newProjectData = { ...req.body, createdBy: req.user._id };
+        if (!newProjectData.slug) {
+            newProjectData.slug = slugify(newProjectData.title, { lower: true, strict: true, locale: 'az' });
+        }
         const newProject = await Project.create(newProjectData);
-
-        await createLog(req.user, 'CREATE', 'Project', newProject._id);
-
+        await createLog(req.user, 'CREATE', 'Project', newProject._id, { title: newProject.title });
         res.status(201).json({ status: 'success', data: { project: newProject } });
     } catch (err) {
+        if (err.code === 11000 && err.keyPattern.slug) {
+            return res.status(400).json({ status: 'fail', message: 'Bu URL slug artıq istifadə olunur.' });
+        }
         res.status(400).json({ status: 'fail', message: err.message });
     }
 };
 
-// @desc    Bütün layihələri gətir
 export const getAllProjects = async (req, res) => {
     try {
         const projects = await Project.find().populate('categories').populate('createdBy', 'username');
-        // Frontend-in gözlədiyi kimi birbaşa massiv formatında qaytarırıq
         res.status(200).json(projects);
     } catch (err) {
         res.status(500).json({ status: 'fail', message: err.message });
     }
 };
 
-// @desc    Bir layihəni ID-yə görə gətir
-export const getProjectById = async (req, res) => {
+export const getProjectBySlug = async (req, res) => {
     try {
-        const project = await Project.findById(req.params.id).populate('categories').populate('createdBy', 'username');
-        if (!project) {
-            return res.status(404).json({ status: 'fail', message: 'Bu ID-də layihə tapılmadı' });
-        }
+        const project = await Project.findOne({ slug: req.params.slug }).populate('categories').populate('createdBy', 'username');
+        if (!project) { return res.status(404).json({ status: 'fail', message: 'Bu URL-də layihə tapılmadı' }); }
         res.status(200).json({ status: 'success', data: { project } });
-    } catch (err) {
-        res.status(500).json({ status: 'fail', message: err.message });
-    }
+    } catch (err) { res.status(500).json({ status: 'fail', message: err.message }); }
 };
 
-// @desc    Bir layihəni yenilə
+export const getProjectById = async (req, res) => {
+    try {
+        const project = await Project.findById(req.params.id).populate('categories');
+        if (!project) { return res.status(404).json({ status: 'fail', message: 'Bu ID-də layihə tapılmadı' }); }
+        res.status(200).json({ status: 'success', data: { project } });
+    } catch (err) { res.status(500).json({ status: 'fail', message: err.message }); }
+};
+
 export const updateProject = async (req, res) => {
     try {
-        const updateData = { ...req.body, updatedBy: req.user._id };
+        const oldDoc = await Project.findById(req.params.id).lean();
+        if (!oldDoc) { return res.status(404).json({ status: 'fail', message: 'Bu ID-də layihə tapılmadı' }); }
 
-        const project = await Project.findByIdAndUpdate(req.params.id, updateData, { new: true, runValidators: true });
-        if (!project) {
-            return res.status(404).json({ status: 'fail', message: 'Bu ID-də layihə tapılmadı' });
+        const updateData = { ...req.body, updatedBy: req.user._id };
+        if (updateData.title && !updateData.slug) {
+            updateData.slug = slugify(updateData.title, { lower: true, strict: true, locale: 'az' });
         }
         
-        await createLog(req.user, 'UPDATE', 'Project', project._id);
+        const updatedDoc = await Project.findByIdAndUpdate(req.params.id, updateData, { new: true, runValidators: true });
         
-        res.status(200).json({ status: 'success', data: { project } });
+        const details = {
+            from: { title: oldDoc.title, status: oldDoc.status },
+            to: { title: updatedDoc.title, status: updatedDoc.status }
+        };
+        await createLog(req.user, 'UPDATE', 'Project', updatedDoc._id, details);
+        
+        res.status(200).json({ status: 'success', data: { project: updatedDoc } });
     } catch (err) {
+        if (err.code === 11000 && err.keyPattern.slug) {
+            return res.status(400).json({ status: 'fail', message: 'Bu URL slug artıq istifadə olunur.' });
+        }
         res.status(400).json({ status: 'fail', message: err.message });
     }
 };
 
-// @desc    Bir layihəni sil (soft delete)
 export const deleteProject = async (req, res) => {
     try {
-        const project = await Project.deleteById(req.params.id, req.user._id);
-        if (!project) {
+        const projectToDelete = await Project.findById(req.params.id);
+        if (!projectToDelete) {
             return res.status(404).json({ status: 'fail', message: 'Bu ID-də layihə tapılmadı' });
         }
         
-        await createLog(req.user, 'DELETE', 'Project', req.params.id);
+        await projectToDelete.delete(req.user._id);
+        
+        await createLog(req.user, 'DELETE', 'Project', req.params.id, { title: projectToDelete.title });
         
         res.status(200).json({ status: 'success', message: 'Layihə uğurla silindi' });
     } catch (err) {

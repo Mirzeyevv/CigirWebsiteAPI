@@ -10,6 +10,12 @@ const projectSchema = new mongoose.Schema({
         minLength: [10, 'Title must be at least 10 characters long'],
         maxLength: [150, 'Title cannot be more than 150 characters long']
     },
+    slug: {
+        type: String,
+        required: true,
+        unique: true,
+        lowercase: true
+    },
     slogan: {
         type: String,
         trim: true,
